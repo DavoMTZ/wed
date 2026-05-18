@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Heraldo del Amor - Boda David & Alejandra</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lora:wght@400;500;600&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- VIDEO INTRO -->
+    <div class="video-intro-container" id="videoContainer">
+        <video id="introVideo" playsinline autoplay muted>
+            <source src="intro.mp4" type="video/mp4">
+            Tu navegador no soporta el formato de video.
+        </video>
+        <button class="skip-video-btn" id="skipVideoBtn">Saltar / Entrar</button>
+    </div>
+
+    <!-- INTRO ANIMATION -->
+    <div class="intro-overlay" id="introOverlay">
+        <div class="newspaper-intro" id="newspaperIntro">
+            <div class="newspaper-half newspaper-left" id="newspaperLeft">
+                <div class="intro-text">
+                    <div class="intro-headline">El Heraldo</div>
+                    <div class="intro-subtitle">DEL AMOR</div>
+                </div>
+            </div>
+            <div class="newspaper-half newspaper-right" id="newspaperRight">
+                <div class="intro-text">
+                    <div class="intro-headline">Edición</div>
+                    <div class="intro-subtitle">ESPECIAL 2026</div>
+                </div>
+            </div>
+            <div class="newspaper-fold"></div>
+            <div class="intro-cta" id="introCta">HAZ CLIC PARA ABRIR</div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT - BOOK PAGES -->
+    <div class="container book-container">
+        
+        <!-- =================== PÁGINA 1: PORTADA =================== -->
+        <div class="book-page active" id="page-1">
+            <!-- NEWSPAPER HEADER -->
+            <div class="newspaper-header">
+                <div class="masthead">EL HERALDO DEL AMOR</div>
+                <div class="tagline-container">
+                    <span>Edición Especial • Volumen I</span>
+                    <span>15 de Abril de 2026</span>
+                    <span>Precio: Invaluable</span>
+                </div>
+            </div>
+
+            <!-- MAIN HEADLINE -->
+            <div class="headline-section">
+                <h1 class="main-headline">¡Noticia de Última Hora: Nos Casamos!</h1>
+                <div class="byline">Por El Redactor del Romance</div>
+                <div class="standfirst">
+                    Una historia de amor que trasciende el tiempo se consolida en el altar. Dos corazones, 
+                    una promesa, y un viaje juntos que apenas comienza.
+                </div>
+            </div>
+
+            <!-- COUNTDOWN SECTION -->
+            <div class="countdown-section">
+                <h2>Faltan para la Gran Celebración</h2>
+                <div class="countdown-timer">
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="days">0</div>
+                        <div class="countdown-label">Días</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="hours">0</div>
+                        <div class="countdown-label">Horas</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="minutes">0</div>
+                        <div class="countdown-label">Minutos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TEASERS (VISTAZOS) -->
+            <div class="article-grid">
+                <div class="article">
+                    <h3 class="article-headline">Nuestros Recuerdos</h3>
+                    <div class="article-text">
+                        Un recorrido visual por los momentos que nos trajeron hasta este día especial.
+                    </div>
+                    <button class="nav-btn next-btn" data-target="2">Ver Galería ➔</button>
+                </div>
+
+                <div class="article">
+                    <h3 class="article-headline">Especial Solteros</h3>
+                    <div class="article-text">
+                        Porque el amor se contagia, tenemos un rincón exclusivo para nuestros invitados solteros.
+                    </div>
+                    <button class="nav-btn next-btn" data-target="3">Sección Solteros ➔</button>
+                </div>
+
+                <div class="article">
+                    <h3 class="article-headline">Confirma tu Asistencia</h3>
+                    <div class="article-text">
+                        Asegura tu lugar en nuestro gran día y conoce a quienes hacen esto posible (Padrinos).
+                    </div>
+                    <button class="nav-btn next-btn" data-target="4">Ir a RSVP ➔</button>
+                </div>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="footer">
+                <p>David Martinez & Alejandra Castillo • Página 1 de 4</p>
+            </div>
+        </div>
+
+        <!-- =================== PÁGINA 2: GALERÍA =================== -->
+        <div class="book-page" id="page-2">
+            <div class="newspaper-header" style="padding: 20px;">
+                <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; text-transform: uppercase;">La Galería del Amor</h2>
+            </div>
+            
+            <div class="article-quote">
+                "El verdadero viaje no es buscar nuevos lugares, sino ver con nuevos ojos"
+            </div>
+
+            <div class="gallery-section" style="border: none; padding: 10px 0;">
+                <div class="gallery-grid">
+                    <div class="gallery-item">
+                        <img src="foto1.jpg" alt="Recuerdo 1" onerror="this.parentElement.innerHTML='<div class=\"gallery-item-placeholder\">[ Fotografía Archivo 1 ]<br>Momentos especiales</div>'">
+                    </div>
+                    <div class="gallery-item">
+                        <img src="foto2.jpg" alt="Recuerdo 2" onerror="this.parentElement.innerHTML='<div class=\"gallery-item-placeholder\">[ Fotografía Archivo 2 ]<br>Nuestra historia</div>'">
+                    </div>
+                    <div class="gallery-item">
+                        <img src="foto3.jpg" alt="Recuerdo 3" onerror="this.parentElement.innerHTML='<div class=\"gallery-item-placeholder\">[ Fotografía Archivo 3 ]<br>El inicio del viaje</div>'">
+                    </div>
+                    <div class="gallery-item">
+                        <img src="foto4.jpg" alt="Recuerdo 4" onerror="this.parentElement.innerHTML='<div class=\"gallery-item-placeholder\">[ Fotografía Archivo 4 ]<br>Risas infinitas</div>'">
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-navigation">
+                <button class="nav-btn prev-btn" data-target="1">⬅ Volver a Portada</button>
+                <button class="nav-btn next-btn" data-target="3">Pasar a Solteros ➔</button>
+            </div>
+            
+            <div class="footer">
+                <p>David Martinez & Alejandra Castillo • Página 2 de 4</p>
+            </div>
+        </div>
+
+        <!-- =================== PÁGINA 3: SOLTEROS =================== -->
+        <div class="book-page" id="page-3">
+            <div class="newspaper-header" style="padding: 20px;">
+                <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; text-transform: uppercase;">Rincón de Solteros</h2>
+            </div>
+
+            <div class="headline-section" style="border-bottom: none; margin-bottom: 10px;">
+                <div class="standfirst">
+                    ¡Atención corazones libres! Regístrate en nuestra exclusiva galería para que los demás solteros te conozcan antes del gran día.
+                </div>
+            </div>
+
+            <!-- FORMULARIO SOLTEROS -->
+            <div class="rsvp-section" style="margin-bottom: 40px; padding: 25px;">
+                <h3 class="article-headline" style="font-size: 20px; text-align: center; border-bottom: none;">Únete a la Galería</h3>
+                <form id="singlesForm" class="singles-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="singleName">Nombre</label>
+                            <input type="text" id="singleName" required placeholder="Ej. Juan Pérez">
+                        </div>
+                        <div class="form-group">
+                            <label for="singlePhoto">URL de tu Foto (Opcional)</label>
+                            <input type="url" id="singlePhoto" placeholder="https://...">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="singlePhrase">Frase descriptiva</label>
+                            <input type="text" id="singlePhrase" required placeholder="Ej. Amante de los viajes">
+                        </div>
+                        <div class="form-group">
+                            <label for="singleHobbies">Hobbies</label>
+                            <input type="text" id="singleHobbies" required placeholder="Ej. Leer, Cine">
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="singleDesc">Breve Descripción (Se mostrará al hacer clic en tu foto)</label>
+                        <textarea id="singleDesc" rows="3" required placeholder="Cuéntanos un poco más sobre ti..."></textarea>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button type="submit" class="rsvp-button">Registrarme</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- GALERÍA DE SOLTEROS -->
+            <div class="singles-gallery-container" style="margin-bottom: 40px;">
+                <h3 class="article-headline" style="text-align: center; border: none; margin-bottom: 30px;">Solteros Confirmados</h3>
+                <div class="singles-grid" id="singlesGrid">
+                    <!-- Cards will be injected here via JS -->
+                </div>
+            </div>
+
+            <div class="page-navigation">
+                <button class="nav-btn prev-btn" data-target="2">⬅ Volver a Galería</button>
+                <button class="nav-btn next-btn" data-target="4">Pasar a RSVP & Padrinos ➔</button>
+            </div>
+
+            <div class="footer">
+                <p>David Martinez & Alejandra Castillo • Página 3 de 4</p>
+            </div>
+        </div>
+
+        <!-- =================== PÁGINA 4: RSVP Y PADRINOS =================== -->
+        <div class="book-page" id="page-4">
+            
+            <!-- PADRINOS SECTION -->
+            <div class="newspaper-header" style="padding: 20px;">
+                <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; text-transform: uppercase;">Agradecimiento Especial</h2>
+            </div>
+            <div class="article-text" style="text-align: center; max-width: 800px; margin: 0 auto 40px auto;">
+                Este sueño no sería posible sin el apoyo incondicional de nuestros padrinos. 
+                Gracias por guiarnos y acompañarnos en este importante paso.
+                <br><br>
+                <strong>Padrinos de Velación:</strong> [Nombre Padrinos]<br>
+                <strong>Padrinos de Anillos:</strong> [Nombre Padrinos]<br>
+                <strong>Padrinos de Lazo:</strong> [Nombre Padrinos]<br>
+                <strong>Padrinos de Arras:</strong> [Nombre Padrinos]
+            </div>
+
+            <!-- RSVP SECTION -->
+            <div class="rsvp-section">
+                <h2 class="rsvp-title">Confirmación de Asistencia</h2>
+                <p class="rsvp-subtitle">¿Compartirás este momento especial con nosotros?</p>
+                <div class="rsvp-form">
+                    <div class="form-group">
+                        <label for="attendees">Número de asistentes:</label>
+                        <input type="number" id="attendees" min="1" max="5" value="1" placeholder="1">
+                    </div>
+                    <button class="rsvp-button" id="rsvpButton">Confirmar</button>
+                </div>
+                <div class="rsvp-counter">
+                    <div class="counter-label">Confirmados hasta el momento</div>
+                    <div class="counter-number" id="totalConfirmed">0</div>
+                </div>
+            </div>
+
+            <div class="page-navigation">
+                <button class="nav-btn prev-btn" data-target="3">⬅ Volver a Solteros</button>
+                <button class="nav-btn prev-btn" data-target="1">⌂ Volver al Inicio</button>
+            </div>
+
+            <div class="footer">
+                <p>David Martinez & Alejandra Castillo • Página 4 de 4</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- AUDIO ELEMENT (RIPTIDE VIA SOUNDCLOUD) -->
+    <iframe id="sc-widget" src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/vancejoy/riptide&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&visual=false" width="0" height="0" scrolling="no" frameborder="no" allow="autoplay" style="display:none;"></iframe>
+    <script src="https://w.soundcloud.com/player/api.js"></script>
+
+    <!-- MUSIC PLAYER BUTTON -->
+    <button class="music-player" id="musicToggle" style="display: none;">
+        <span class="music-icon"></span>
+        <div class="music-info">
+            <span class="music-track">Vance Joy - Riptide</span>
+            <span id="musicLabel">Pausar música</span>
+        </div>
+    </button>
+
+    <script src="main.js"></script>
+</body>
+</html>
