@@ -53,13 +53,10 @@ service firebase.storage {
 4. En el tipo de SDK, elige tu plataforma y copia el objeto `firebaseConfig`
 
 ### **Paso 5: Actualizar tu página**
-1. Abre el archivo `firebase-config.js` en tu carpeta del proyecto
-2. **Reemplaza los valores** con los que copiaste:
-   - `YOUR_API_KEY` → Tu apiKey
-   - `YOUR_PROJECT_ID` → Tu projectId
-   - etc.
-
+1. **Copia** `firebase-config.example.js` → **Renómbralo** a `firebase-config.js`
+2. Abre `firebase-config.js` y **reemplaza los valores** con tus credenciales de Firebase
 3. **Guarda el archivo**
+4. ⚠️ **NOTA:** Este archivo NO se sube a Git (está protegido en `.gitignore`)
 
 ---
 

@@ -51,27 +51,33 @@ service firebase.storage {
 3. Elige **"Config"** en el tipo de aplicación
 4. Copia el objeto `firebaseConfig`
 
-### 5. Actualizar tu Página
+### 5. Crear tu Archivo de Configuración (PRIVADO)
 
-1. Abre el archivo `firebase-config.example.js` en tu carpeta del proyecto
-2. Reemplaza los valores con los que copiaste:
-   - `apiKey` → Tu API key
-   - `projectId` → Tu project ID
-   - `storageBucket` → Tu storage bucket
-   - `messagingSenderId` → Tu messaging sender ID
-   - `appId` → Tu app ID
+⚠️ **IMPORTANTE**: Mantén tus credenciales seguras. El archivo `firebase-config.js` nunca será subido a Git.
 
-3. Renombra el archivo de `firebase-config.example.js` a `firebase-config.js`
+1. En tu carpeta del proyecto, **copia** `firebase-config.example.js`
+2. **Renómbralo** a `firebase-config.js`
+3. Abre el nuevo archivo y **reemplaza los valores** con los que copiaste:
+   - `YOUR_API_KEY` → Tu API key
+   - `YOUR_PROJECT_ID` → Tu project ID
+   - `YOUR_PROJECT_ID.appspot.com` → Tu storage bucket (en storageBucket)
+   - `YOUR_MESSAGING_SENDER_ID` → Tu messaging sender ID
+   - `YOUR_APP_ID` → Tu app ID
 
-4. Abre `index.html` y agrega esta línea ANTES de `<script src="main.js"></script>`:
-
-```html
-<script src="firebase-config.js"></script>
-```
+4. **Guarda el archivo**
+5. Verifica que `index.html` incluya ANTES de `<script src="main.js"></script>`:
+   ```html
+   <script src="firebase-config.js"></script>
+   ```
 
 ### 6. ¡Listo!
 
 Ahora los solteros podrán subir fotos directamente desde el formulario. Las fotos se guardarán en Firebase Storage y se mostrarán en la galería.
+
+**Nota de Seguridad:**
+- ✅ `firebase-config.js` está en `.gitignore` (nunca se sube a Git)
+- ✅ Solo `firebase-config.example.js` está en el repositorio (sin valores reales)
+- ✅ Cada persona que clonar el repo debe crear su propio `firebase-config.js`
 
 ## Límites y Pricing
 
