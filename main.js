@@ -1,6 +1,49 @@
 let scPlayer = null;
 let scIsReady = false;
 
+// =================== FIREBASE INIT ===================
+let firebaseInitialized = false;
+
+// Esperar a que firebase-config.js se cargue (si existe)
+if (typeof firebaseConfig !== 'undefined') {
+    try {
+        firebase.initializeApp(firebaseConfig);
+        firebaseInitialized = true;
+        console.log('✓ Firebase inicializado correctamente');
+    } catch (error) {
+        console.warn('⚠ Error al inicializar Firebase:', error.message);
+        console.warn('Para habilitar subida de fotos, sigue las instrucciones en FIREBASE_SETUP.md');
+    }
+} else {
+    console.warn('⚠ firebase-config.js no encontrado. Las fotos se guardarán como URLs externas.');
+    console.warn('Para habilitar subida de fotos, sigue las instrucciones en FIREBASE_SETUP.md');
+}
+
+async function uploadPhotoToFirebase(file) {
+    if (!firebaseInitialized) {
+        throw new Error("Firebase no está configurado. Lee FIREBASE_SETUP.md para instrucciones.");
+    }
+
+    try {
+        const timestamp = Date.now();
+        const fileName = `singles/${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const storageRef = firebase.storage().ref(fileName);
+        
+        // Upload with progress
+        const uploadTask = storageRef.put(file);
+        
+        // Wait for completion
+        await uploadTask;
+        
+        // Get download URL
+        const downloadURL = await storageRef.getDownloadURL();
+        return downloadURL;
+    } catch (error) {
+        console.error("Error uploading photo:", error);
+        throw new Error("Error al subir la foto. Verifica tu conexión y intenta de nuevo.");
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // =================== SOUNDCLOUD INIT ===================
     const iframeElement = document.getElementById('sc-widget');
@@ -242,6 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =================== SINGLES GALLERY LOGIC ===================
     const singlesForm = document.getElementById('singlesForm');
     const singlesGrid = document.getElementById('singlesGrid');
+    const photoUploadStatus = document.getElementById('photoUploadStatus');
 
     function renderSingles() {
         if (!singlesGrid) return;
@@ -281,40 +325,99 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Handle file input preview
+    const fileInput = document.getElementById('singlePhoto');
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const validTypes = ['image/jpeg', 'image/png'];
+                const maxSize = 2 * 1024 * 1024; // 2MB
+                
+                if (!validTypes.includes(file.type)) {
+                    photoUploadStatus.textContent = '❌ Solo se permiten JPG o PNG';
+                    photoUploadStatus.style.color = '#d00';
+                    fileInput.value = '';
+                    return;
+                }
+                
+                if (file.size > maxSize) {
+                    photoUploadStatus.textContent = '❌ La foto debe ser menor a 2MB';
+                    photoUploadStatus.style.color = '#d00';
+                    fileInput.value = '';
+                    return;
+                }
+                
+                photoUploadStatus.textContent = '✓ Foto seleccionada: ' + file.name;
+                photoUploadStatus.style.color = '#060';
+            }
+        });
+    }
+
     if (singlesForm) {
         // Initial render
         renderSingles();
 
-        singlesForm.addEventListener('submit', (e) => {
+        singlesForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const newSingle = {
-                name: document.getElementById('singleName').value,
-                photo: document.getElementById('singlePhoto').value,
-                phrase: document.getElementById('singlePhrase').value,
-                hobbies: document.getElementById('singleHobbies').value,
-                description: document.getElementById('singleDesc').value
-            };
-
-            const savedSingles = JSON.parse(localStorage.getItem('weddingSingles') || '[]');
-            savedSingles.push(newSingle);
-            localStorage.setItem('weddingSingles', JSON.stringify(savedSingles));
-
-            // Feedback
+            const fileInput = document.getElementById('singlePhoto');
+            const file = fileInput.files[0];
             const submitBtn = singlesForm.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
-            submitBtn.textContent = '¡Registrado!';
-            submitBtn.style.background = 'var(--light-grey)';
-            submitBtn.style.color = '#000';
-            
-            setTimeout(() => {
-                submitBtn.textContent = originalText;
-                submitBtn.style.background = '';
-                submitBtn.style.color = '';
-            }, 2000);
 
-            singlesForm.reset();
-            renderSingles();
+            if (!file) {
+                photoUploadStatus.textContent = '❌ Debes seleccionar una foto';
+                photoUploadStatus.style.color = '#d00';
+                return;
+            }
+
+            try {
+                submitBtn.textContent = 'Subiendo foto...';
+                submitBtn.disabled = true;
+                photoUploadStatus.textContent = 'Subiendo...';
+                photoUploadStatus.style.color = '#666';
+
+                // Upload photo to Firebase
+                const photoURL = await uploadPhotoToFirebase(file);
+
+                const newSingle = {
+                    name: document.getElementById('singleName').value,
+                    photo: photoURL,
+                    phrase: document.getElementById('singlePhrase').value,
+                    hobbies: document.getElementById('singleHobbies').value,
+                    description: document.getElementById('singleDesc').value
+                };
+
+                const savedSingles = JSON.parse(localStorage.getItem('weddingSingles') || '[]');
+                savedSingles.push(newSingle);
+                localStorage.setItem('weddingSingles', JSON.stringify(savedSingles));
+
+                // Feedback
+                submitBtn.textContent = '¡Registrado!';
+                submitBtn.style.background = 'var(--light-grey)';
+                submitBtn.style.color = '#000';
+                photoUploadStatus.textContent = '✓ ¡Foto subida correctamente!';
+                photoUploadStatus.style.color = '#060';
+                
+                setTimeout(() => {
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    submitBtn.style.background = '';
+                    submitBtn.style.color = '';
+                    photoUploadStatus.textContent = '';
+                }, 2000);
+
+                singlesForm.reset();
+                renderSingles();
+
+            } catch (error) {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                photoUploadStatus.textContent = '❌ ' + error.message;
+                photoUploadStatus.style.color = '#d00';
+                console.error(error);
+            }
         });
     }
 });
