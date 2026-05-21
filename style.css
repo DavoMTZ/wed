@@ -999,3 +999,113 @@ body.content-visible .container {
         font-size: 32px;
     }
 }
+
+/* Extra small devices - mobile fixes */
+@media (max-width: 480px) {
+    html, body {
+        font-size: 16px;
+    }
+
+    .container {
+        padding: 20px 12px;
+    }
+
+    .book-page {
+        padding: 16px;
+    }
+
+    .newspaper-intro {
+        width: 96%;
+        max-width: 360px;
+        height: 420px;
+        margin: 0 auto;
+    }
+
+    .intro-text {
+        padding: 16px;
+    }
+
+    .intro-headline {
+        font-size: 20px;
+    }
+
+    .intro-subtitle {
+        font-size: 12px;
+    }
+
+    .skip-video-btn {
+        bottom: 16px;
+        right: 12px;
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+
+    .masthead {
+        font-size: clamp(24px, 7vw, 36px);
+    }
+
+    .article-grid {
+        gap: 18px;
+    }
+
+    .article {
+        padding: 0;
+        border: none;
+    }
+
+    .standfirst {
+        font-size: 16px;
+        padding: 0 6px;
+    }
+
+    .rsvp-form {
+        display: block;
+        text-align: center;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .form-row .form-group {
+        min-width: 100%;
+    }
+
+    .nav-btn {
+        width: 100%;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .music-player {
+        display: none;
+    }
+
+    .gallery-grid,
+    .singles-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .single-name {
+        font-size: 18px;
+    }
+
+    .single-phrase {
+        font-size: 12px;
+    }
+
+    .photo-preview,
+    .gallery-item img {
+        object-position: center;
+    }
+
+    .countdown-value {
+        font-size: 28px;
+    }
+
+    .footer {
+        font-size: 13px;
+        padding: 20px 0;
+    }
+}
