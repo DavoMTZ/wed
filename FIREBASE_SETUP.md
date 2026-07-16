@@ -51,9 +51,73 @@ service firebase.storage {
 3. Elige **"Config"** en el tipo de aplicación
 4. Copia el objeto `firebaseConfig`
 
+### 4.1. Crear la estructura de Firestore para RSVP
+
+En **Firestore Database**, crea dos colecciones:
+
+#### `invitations`
+Usa como ID de documento el código que le darás a cada invitado. Ejemplo:
+
+```json
+{
+  "guestName": "Juan Pérez",
+  "allowedAttendees": 2,
+  "active": true
+}
+```
+
+#### `rsvps`
+No necesitas crear documentos manualmente. La página guardará aquí la confirmación final:
+
+```json
+{
+  "code": "DA-2026",
+  "guestName": "Juan Pérez",
+  "attendees": 2,
+  "expectedAttendees": 2,
+  "confirmedAt": "server timestamp"
+}
+```
+
+#### Reglas de Firestore
+
+Para este flujo, puedes empezar con reglas simples:
+
+```txt
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /invitations/{code} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /rsvps/{code} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+  }
+}
+```
+
+Si más adelante quieres endurecer seguridad, el siguiente paso sería añadir autenticación o un backend que valide el código.
+
 ### 5. Crear tu Archivo de Configuración (PRIVADO)
 
 ⚠️ **IMPORTANTE**: Mantén tus credenciales seguras. El archivo `firebase-config.js` nunca será subido a Git.
+
+### Modo local de prueba
+
+Si solo quieres probar la invitación y el modal sin Firebase real, deja un `firebase-config.js` local con:
+
+```js
+const firebaseConfig = {
+  useLocalRsvpDb: true
+};
+```
+
+En ese modo, la confirmación se guarda en `localStorage` y la invitación de prueba `QDX-2027` queda disponible para validar el flujo.
 
 1. En tu carpeta del proyecto, **copia** `firebase-config.example.js`
 2. **Renómbralo** a `firebase-config.js`
@@ -73,6 +137,12 @@ service firebase.storage {
 ### 6. ¡Listo!
 
 Ahora los solteros podrán subir fotos directamente desde el formulario. Las fotos se guardarán en Firebase Storage y se mostrarán en la galería.
+
+Además, la confirmación de asistencia usará Firestore para:
+- validar el código de invitación
+- comprobar el número de asistentes
+- guardar la confirmación
+- mostrar el modal con la información de ceremonia y recepción
 
 **Nota de Seguridad:**
 - ✅ `firebase-config.js` está en `.gitignore` (nunca se sube a Git)

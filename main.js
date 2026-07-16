@@ -1,19 +1,148 @@
 let scPlayer = null;
 let scIsReady = false;
+const COUNTDOWN_TARGET = new Date(2026, 7, 1, 17, 0, 0);
+const RSVP_MIN_ATTENDEES = 1;
+const RSVP_MAX_ATTENDEES = 5;
+const MAX_SINGLE_PHOTO_BYTES = 2 * 1024 * 1024;
+const VALID_PHOTO_TYPES = ['image/jpeg', 'image/png'];
+const ANIMATION_PAGE_FLIP_MS = 800;
+const ANIMATION_NEWSPAPER_MS = 1200;
+const RSVP_INVITATIONS_COLLECTION = 'invitations';
+const RSVP_RECORDS_COLLECTION = 'rsvps';
+const LOCAL_RSVP_STORAGE_KEY = 'weddingLocalFirestore';
+const CEREMONY_INFO = {
+    ceremony: {
+        title: 'Ceremonia religiosa',
+        schedule: 'Sábado 1 de agosto de 2026, 5:00 PM',
+        venue: 'Parroquia / Ceremonia principal',
+        address: 'Dirección por confirmar',
+        note: 'Llegar 15 minutos antes para acomodación.'
+    },
+    reception: {
+        title: 'Recepción',
+        schedule: 'Sábado 1 de agosto de 2026, 7:00 PM',
+        venue: 'Salón de eventos',
+        address: 'Dirección por confirmar',
+        note: 'Después de la ceremonia, nos reuniremos para celebrar.'
+    }
+};
+
+function getServerTimestamp() {
+    return (typeof firebase !== 'undefined' &&
+        firebase &&
+        firebase.firestore &&
+        firebase.firestore.FieldValue &&
+        typeof firebase.firestore.FieldValue.serverTimestamp === 'function')
+        ? firebase.firestore.FieldValue.serverTimestamp()
+        : new Date().toISOString();
+}
+
+function createLocalRsvpDatabase() {
+    const readState = () => {
+        try {
+            const raw = localStorage.getItem(LOCAL_RSVP_STORAGE_KEY);
+            const parsed = raw ? JSON.parse(raw) : null;
+            return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (error) {
+            console.warn('No se pudo leer la base local de RSVP:', error);
+            return {};
+        }
+    };
+
+    const writeState = (state) => {
+        localStorage.setItem(LOCAL_RSVP_STORAGE_KEY, JSON.stringify(state));
+    };
+
+    const ensureSeed = () => {
+        const state = readState();
+        state.invitations = state.invitations || {};
+        state.rsvps = state.rsvps || {};
+
+        if (!state.invitations['QDX-2027']) {
+            state.invitations['QDX-2027'] = {
+                guestName: 'Invitado de prueba',
+                expectedAttendees: 2,
+                confirmed: false,
+                confirmedAt: null,
+                confirmedAttendees: 0
+            };
+        }
+
+        writeState(state);
+    };
+
+    const normalizeDocData = (value) => {
+        if (!value || typeof value !== 'object') {
+            return {};
+        }
+
+        return { ...value };
+    };
+
+    ensureSeed();
+
+    return {
+        collection(collectionName) {
+            return {
+                async get() {
+                    const state = readState();
+                    const collection = state[collectionName] || {};
+                    return { size: Object.keys(collection).length };
+                },
+                doc(docId) {
+                    return {
+                        async get() {
+                            const state = readState();
+                            const collection = state[collectionName] || {};
+                            const data = collection[docId];
+                            return {
+                                exists: Boolean(data),
+                                data: () => normalizeDocData(data)
+                            };
+                        },
+                        async set(payload, options = {}) {
+                            const state = readState();
+                            state[collectionName] = state[collectionName] || {};
+                            const existing = state[collectionName][docId] || {};
+                            state[collectionName][docId] = options.merge
+                                ? { ...existing, ...payload }
+                                : { ...payload };
+                            writeState(state);
+                        }
+                    };
+                }
+            };
+        }
+    };
+}
 
 // =================== FIREBASE INIT ===================
 let firebaseInitialized = false;
+let firebaseDb = null;
+const useLocalRsvpDb = typeof firebaseConfig !== 'undefined' && firebaseConfig && firebaseConfig.useLocalRsvpDb === true;
+const hasFirebaseRuntime = typeof firebase !== 'undefined' &&
+    firebase &&
+    typeof firebase.initializeApp === 'function' &&
+    typeof firebase.storage === 'function' &&
+    typeof firebase.firestore === 'function';
 
 // Esperar a que firebase-config.js se cargue (si existe)
-if (typeof firebaseConfig !== 'undefined') {
+if (useLocalRsvpDb) {
+    firebaseDb = createLocalRsvpDatabase();
+    console.log('✓ Base local de RSVP inicializada correctamente');
+} else if (typeof firebaseConfig !== 'undefined' && hasFirebaseRuntime) {
     try {
         firebase.initializeApp(firebaseConfig);
         firebaseInitialized = true;
+        firebaseDb = firebase.firestore();
         console.log('✓ Firebase inicializado correctamente');
     } catch (error) {
         console.warn('⚠ Error al inicializar Firebase:', error.message);
         console.warn('Para habilitar subida de fotos, sigue las instrucciones en FIREBASE_SETUP.md');
     }
+} else if (typeof firebaseConfig !== 'undefined') {
+    console.warn('⚠ firebase-config.js está presente, pero la SDK de Firebase compat completa no está cargada.');
+    console.warn('La subida de fotos no funcionará hasta corregir el orden o tipo de scripts.');
 } else {
     console.warn('⚠ firebase-config.js no encontrado. Las fotos se guardarán como URLs externas.');
     console.warn('Para habilitar subida de fotos, sigue las instrucciones en FIREBASE_SETUP.md');
@@ -21,7 +150,7 @@ if (typeof firebaseConfig !== 'undefined') {
 
 async function uploadPhotoToFirebase(file) {
     if (!firebaseInitialized) {
-        throw new Error("Firebase no está configurado. Lee FIREBASE_SETUP.md para instrucciones.");
+        throw new Error("Firebase no está configurado o la SDK no está cargada. Lee FIREBASE_SETUP.md.");
     }
 
     try {
@@ -42,6 +171,37 @@ async function uploadPhotoToFirebase(file) {
         console.error("Error uploading photo:", error);
         throw new Error("Error al subir la foto. Verifica tu conexión y intenta de nuevo.");
     }
+}
+
+function safeJsonParse(value, fallback) {
+    try {
+        const parsed = JSON.parse(value);
+        return parsed ?? fallback;
+    } catch {
+        return fallback;
+    }
+}
+
+function normalizeInvitationCode(value) {
+    return String(value || '')
+        .trim()
+        .replace(/\s+/g, '')
+        .toUpperCase();
+}
+
+function createGalleryFallback(title, caption) {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'gallery-item-placeholder';
+
+    const titleLine = document.createElement('div');
+    titleLine.textContent = `[ ${title || 'Fotografía Archivo'} ]`;
+
+    const captionLine = document.createElement('div');
+    captionLine.textContent = caption || 'Archivo no disponible';
+
+    placeholder.appendChild(titleLine);
+    placeholder.appendChild(captionLine);
+    return placeholder;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -124,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
             introOverlay.classList.remove('active');
             introOverlay.classList.add('fade-out');
             document.body.classList.add('content-visible');
-        }, 1200);
+        }, ANIMATION_NEWSPAPER_MS);
     }
 
     if(newspaperIntro) {
@@ -155,9 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const daysEl = document.getElementById('days');
         if (!daysEl) return;
 
-        const targetDate = new Date('August 1, 2026 17:00:00').getTime();
-        const now = new Date().getTime();
-        const distance = targetDate - now;
+        const distance = COUNTDOWN_TARGET.getTime() - Date.now();
 
         if (distance < 0) {
             daysEl.textContent = '0';
@@ -191,42 +349,292 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // =================== PAGE 2 GALLERY ===================
+    const galleryImages = document.querySelectorAll('.gallery-item img');
+    galleryImages.forEach((img) => {
+        const handleGalleryFallback = () => {
+            if (!img.isConnected) return;
+            const title = img.dataset.placeholderTitle;
+            const caption = img.dataset.placeholderCaption;
+            img.replaceWith(createGalleryFallback(title, caption));
+        };
+
+        if (img.complete && img.naturalWidth === 0) {
+            handleGalleryFallback();
+            return;
+        }
+
+        img.addEventListener('error', handleGalleryFallback);
+    });
+
     // =================== RSVP SYSTEM ===================
     const rsvpButton = document.getElementById('rsvpButton');
     const attendeesInput = document.getElementById('attendees');
+    const invitationCodeInput = document.getElementById('invitationCode');
     const totalConfirmed = document.getElementById('totalConfirmed');
-    
-    if (rsvpButton && attendeesInput && totalConfirmed) {
-        let confirmedCount = 0;
-        const savedCount = localStorage.getItem('weddingRSVP');
-        if (savedCount) {
-            confirmedCount = parseInt(savedCount);
-            totalConfirmed.textContent = confirmedCount;
+    const rsvpModal = document.getElementById('rsvpModal');
+    const rsvpModalSubtitle = document.getElementById('rsvpModalSubtitle');
+    const rsvpModalValidation = document.getElementById('rsvpModalValidation');
+    const ceremonyInfo = document.getElementById('ceremonyInfo');
+    const receptionInfo = document.getElementById('receptionInfo');
+    const locationModal = document.getElementById('locationModal');
+    const locationModalSubtitle = document.getElementById('locationModalSubtitle');
+    const confirmAttendanceBtn = document.getElementById('confirmAttendanceBtn');
+    const cancelAttendanceBtn = document.getElementById('cancelAttendanceBtn');
+    const modalCloseButtons = document.querySelectorAll('[data-close-modal]');
+    const locationCloseButtons = document.querySelectorAll('[data-close-location-modal]');
+    let pendingRsvp = null;
+
+    function renderCeremonyBlock(info) {
+        return `
+            <strong>${info.title}</strong><br>
+            ${info.schedule}<br>
+            ${info.venue}<br>
+            ${info.address}<br>
+            <em>${info.note}</em>
+        `;
+    }
+
+    function openRsvpModal() {
+        if (!rsvpModal || !pendingRsvp) return;
+
+        rsvpModal.classList.add('active');
+        rsvpModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+
+        const guestName = pendingRsvp.invitation.guestName || 'Invitado';
+        rsvpModalSubtitle.textContent = `Hola ${guestName}. Revisa la información antes de confirmar tu asistencia.`;
+        rsvpModalValidation.textContent = `Código ${pendingRsvp.code} verificado. Tu invitación permite ${pendingRsvp.expectedAttendees} asistentes y seleccionaste ${pendingRsvp.attendees}.`;
+        ceremonyInfo.innerHTML = renderCeremonyBlock(CEREMONY_INFO.ceremony);
+        receptionInfo.innerHTML = renderCeremonyBlock(CEREMONY_INFO.reception);
+    }
+
+    function closeRsvpModal() {
+        if (!rsvpModal) return;
+
+        rsvpModal.classList.remove('active');
+        rsvpModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        pendingRsvp = null;
+    }
+
+    function openLocationModal(guestName) {
+        if (!locationModal) return;
+
+        if (locationModalSubtitle) {
+            locationModalSubtitle.textContent = `Gracias${guestName ? `, ${guestName}` : ''}. Aquí tienes la guía editorial de ubicación y hospedaje.`;
         }
 
-        rsvpButton.addEventListener('click', () => {
-            const attendees = parseInt(attendeesInput.value) || 1;
-            
-            if (attendees < 1 || attendees > 5) {
-                alert('Por favor, ingresa un número entre 1 y 5 invitados');
+        locationModal.classList.add('active');
+        locationModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+    }
+
+    function closeLocationModal() {
+        if (!locationModal) return;
+
+        locationModal.classList.remove('active');
+        locationModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+    }
+
+    async function refreshConfirmedCount() {
+        if (!totalConfirmed) return;
+
+        if (firebaseDb) {
+            try {
+                const snapshot = await firebaseDb.collection(RSVP_RECORDS_COLLECTION).get();
+                totalConfirmed.textContent = snapshot.size;
+                return;
+            } catch (error) {
+                console.warn('No se pudo leer el total de confirmados desde Firestore:', error);
+            }
+        }
+
+        const savedCount = Number.parseInt(localStorage.getItem('weddingRSVP') || '0', 10);
+        totalConfirmed.textContent = Number.isFinite(savedCount) ? String(savedCount) : '0';
+    }
+
+    async function fetchInvitation(code) {
+        if (!firebaseDb) {
+            throw new Error('Firestore no está disponible.');
+        }
+
+        const normalizedCode = normalizeInvitationCode(code);
+        const snapshot = await firebaseDb.collection(RSVP_INVITATIONS_COLLECTION).doc(normalizedCode).get();
+        return snapshot.exists ? { code: normalizedCode, ...snapshot.data() } : null;
+    }
+
+async function saveRsvpConfirmation() {
+    if (!pendingRsvp || !firebaseDb) {
+        throw new Error('No hay una confirmación pendiente.');
+    }
+
+        const rsvpRef = firebaseDb.collection(RSVP_RECORDS_COLLECTION).doc(pendingRsvp.code);
+        const existing = await rsvpRef.get();
+        if (existing.exists) {
+            throw new Error('Este código ya fue usado para confirmar asistencia.');
+        }
+
+        const payload = {
+            code: pendingRsvp.code,
+            guestName: pendingRsvp.invitation.guestName || '',
+            attendees: pendingRsvp.attendees,
+            expectedAttendees: pendingRsvp.expectedAttendees,
+            confirmedAt: getServerTimestamp()
+        };
+
+        await rsvpRef.set(payload);
+        await firebaseDb.collection(RSVP_INVITATIONS_COLLECTION).doc(pendingRsvp.code).set({
+            confirmed: true,
+            confirmedAt: getServerTimestamp(),
+            confirmedAttendees: pendingRsvp.attendees
+        }, { merge: true });
+
+        // Enviar datos a n8n a través de un Webhook
+        try {
+            // Reemplaza esta URL con la "Production URL" de tu nodo Webhook en n8n
+            const webhookUrl = 'TU_URL_DE_N8N_AQUI'; 
+            if (webhookUrl !== 'TU_URL_DE_N8N_AQUI') {
+                fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload) // Enviamos código, nombre, y asistentes
+                }).catch(err => console.log('Error silenciado al enviar a n8n', err));
+            }
+        } catch (error) {
+            console.log('Error de red con n8n');
+        }
+    }
+
+    if (rsvpModal) {
+        modalCloseButtons.forEach((button) => {
+            button.addEventListener('click', closeRsvpModal);
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                if (locationModal && locationModal.classList.contains('active')) {
+                    closeLocationModal();
+                } else {
+                    closeRsvpModal();
+                }
+            }
+        });
+    }
+
+    if (locationModal) {
+        locationCloseButtons.forEach((button) => {
+            button.addEventListener('click', closeLocationModal);
+        });
+    }
+
+    if (rsvpButton && attendeesInput && invitationCodeInput && totalConfirmed) {
+        refreshConfirmedCount();
+
+        rsvpButton.addEventListener('click', async () => {
+            const attendees = Number.parseInt(attendeesInput.value, 10) || 1;
+            const invitationCode = normalizeInvitationCode(invitationCodeInput.value);
+
+            if (!firebaseDb) {
+                alert('La base de datos de confirmación no está disponible. Verifica Firebase.');
                 return;
             }
 
-            confirmedCount += attendees;
-            totalConfirmed.textContent = confirmedCount;
-            localStorage.setItem('weddingRSVP', confirmedCount);
+            if (!invitationCode) {
+                alert('Ingresa tu código de invitación para continuar.');
+                return;
+            }
 
-            rsvpButton.textContent = '¡Confirmado!';
-            rsvpButton.style.background = 'var(--light-grey)';
-            rsvpButton.style.color = '#000';
-            
-            setTimeout(() => {
-                rsvpButton.textContent = 'Confirmar';
-                rsvpButton.style.background = '';
-                rsvpButton.style.color = '';
-            }, 2000);
+            if (attendees < RSVP_MIN_ATTENDEES || attendees > RSVP_MAX_ATTENDEES) {
+                alert(`Por favor, ingresa un número entre ${RSVP_MIN_ATTENDEES} y ${RSVP_MAX_ATTENDEES} invitados`);
+                return;
+            }
 
-            attendeesInput.value = '1';
+            const originalText = rsvpButton.textContent;
+            rsvpButton.disabled = true;
+            rsvpButton.textContent = 'Verificando...';
+
+            try {
+                const invitation = await fetchInvitation(invitationCode);
+
+                if (!invitation) {
+                    alert('El código de invitación no existe o no es válido.');
+                    return;
+                }
+
+                const expectedAttendees = Number.parseInt(invitation.allowedAttendees ?? invitation.attendees ?? 0, 10);
+                if (!Number.isFinite(expectedAttendees) || expectedAttendees <= 0) {
+                    alert('La invitación no tiene configurado un número válido de asistentes.');
+                    return;
+                }
+
+                if (attendees > expectedAttendees) {
+                    alert(`Este código permite un máximo de ${expectedAttendees} asistentes. Por favor, ajusta el número antes de continuar.`);
+                    return;
+                }
+
+                const existingRsvp = await firebaseDb.collection(RSVP_RECORDS_COLLECTION).doc(invitationCode).get();
+                if (existingRsvp.exists) {
+                    alert('Este código ya confirmó asistencia.');
+                    return;
+                }
+
+                pendingRsvp = {
+                    code: invitationCode,
+                    attendees,
+                    expectedAttendees,
+                    invitation
+                };
+
+                openRsvpModal();
+            } catch (error) {
+                console.error('Error verificando la invitación:', error);
+                alert(error.message || 'No se pudo verificar el código. Intenta de nuevo.');
+            } finally {
+                rsvpButton.disabled = false;
+                rsvpButton.textContent = originalText;
+            }
+        });
+    }
+
+    if (confirmAttendanceBtn) {
+        confirmAttendanceBtn.addEventListener('click', async () => {
+            if (!pendingRsvp) {
+                return;
+            }
+
+            const originalText = confirmAttendanceBtn.textContent;
+            confirmAttendanceBtn.disabled = true;
+            confirmAttendanceBtn.textContent = 'Confirmando...';
+
+            try {
+                await saveRsvpConfirmation();
+                await refreshConfirmedCount();
+                const guestName = pendingRsvp.guestName;
+                closeRsvpModal();
+                openLocationModal(guestName);
+
+                if (rsvpButton) {
+                    rsvpButton.textContent = '¡Asistencia confirmada!';
+                    rsvpButton.style.background = 'var(--light-grey)';
+                    rsvpButton.style.color = '#000';
+                    setTimeout(() => {
+                        rsvpButton.textContent = 'Confirmar';
+                        rsvpButton.style.background = '';
+                        rsvpButton.style.color = '';
+                    }, 2000);
+                }
+
+                attendeesInput.value = '1';
+                invitationCodeInput.value = '';
+            } catch (error) {
+                console.error('Error confirmando asistencia:', error);
+                alert(error.message || 'No se pudo confirmar la asistencia.');
+            } finally {
+                confirmAttendanceBtn.disabled = false;
+                confirmAttendanceBtn.textContent = originalText;
+            }
         });
     }
 
@@ -278,7 +686,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Cleanup inline styles that helped during animation
                 targetPage.style.visibility = '';
                 targetPage.style.opacity = '';
-            }, 800);
+            }, ANIMATION_PAGE_FLIP_MS);
         });
     });
 
@@ -287,36 +695,94 @@ document.addEventListener('DOMContentLoaded', () => {
     const singlesGrid = document.getElementById('singlesGrid');
     const photoUploadStatus = document.getElementById('photoUploadStatus');
 
+    function getSavedSingles() {
+        try {
+        const saved = safeJsonParse(localStorage.getItem('weddingSingles') || '[]', []);
+        return Array.isArray(saved) ? saved : [];
+        } catch (error) {
+            console.warn('No se pudieron leer los solteros guardados:', error);
+            return [];
+        }
+    }
+
+    function createPlaceholder(text) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'single-placeholder';
+        placeholder.textContent = text;
+        return placeholder;
+    }
+
     function renderSingles() {
         if (!singlesGrid) return;
         
         singlesGrid.innerHTML = '';
-        const savedSingles = JSON.parse(localStorage.getItem('weddingSingles') || '[]');
+        const savedSingles = getSavedSingles();
         
         if (savedSingles.length === 0) {
-            singlesGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; font-style: italic; color: var(--dark-grey);">Aún no hay solteros registrados. ¡Sé el primero!</p>';
+            const emptyState = document.createElement('p');
+            emptyState.style.gridColumn = '1 / -1';
+            emptyState.style.textAlign = 'center';
+            emptyState.style.fontStyle = 'italic';
+            emptyState.style.color = 'var(--dark-grey)';
+            emptyState.textContent = 'Aún no hay solteros registrados. ¡Sé el primero!';
+            singlesGrid.appendChild(emptyState);
             return;
         }
 
-        savedSingles.forEach((single, index) => {
+        savedSingles.forEach((single) => {
             const card = document.createElement('div');
             card.className = 'single-card';
-            card.innerHTML = `
-                <div class="single-card-img-wrapper" title="Haz clic para ver descripción">
-                    ${single.photo ? `<img src="${single.photo}" alt="${single.name}" onerror="this.outerHTML='<div class=\\'single-placeholder\\'>?</div>'">` : '<div class="single-placeholder">?</div>'}
-                    <div class="single-overlay">
-                        <div class="single-desc-text">${single.description}</div>
-                    </div>
-                </div>
-                <div class="single-info">
-                    <div class="single-name">${single.name}</div>
-                    <div class="single-phrase">"${single.phrase}"</div>
-                    <div class="single-hobbies">${single.hobbies}</div>
-                </div>
-            `;
+
+            const imgWrapper = document.createElement('div');
+            imgWrapper.className = 'single-card-img-wrapper';
+            imgWrapper.title = 'Haz clic para ver descripción';
+
+            if (single.photo) {
+                const img = document.createElement('img');
+                img.src = single.photo;
+                img.alt = single.name || 'Foto de soltero';
+                img.addEventListener('error', () => {
+                    if (img.isConnected) {
+                        img.replaceWith(createPlaceholder('?'));
+                    }
+                });
+                imgWrapper.appendChild(img);
+            } else {
+                imgWrapper.appendChild(createPlaceholder('?'));
+            }
+
+            const overlay = document.createElement('div');
+            overlay.className = 'single-overlay';
+
+            const descText = document.createElement('div');
+            descText.className = 'single-desc-text';
+            descText.textContent = single.description || '';
+            overlay.appendChild(descText);
+
+            imgWrapper.appendChild(overlay);
+            card.appendChild(imgWrapper);
+
+            const info = document.createElement('div');
+            info.className = 'single-info';
+
+            const name = document.createElement('div');
+            name.className = 'single-name';
+            name.textContent = single.name || '';
+
+            const phrase = document.createElement('div');
+            phrase.className = 'single-phrase';
+            phrase.textContent = `"${single.phrase || ''}"`;
+
+            const hobbies = document.createElement('div');
+            hobbies.className = 'single-hobbies';
+            hobbies.textContent = single.hobbies || '';
+
+            info.appendChild(name);
+            info.appendChild(phrase);
+            info.appendChild(hobbies);
+            card.appendChild(info);
             
             // Toggle description overlay on image click
-            const imgWrapper = card.querySelector('.single-card-img-wrapper');
             imgWrapper.addEventListener('click', () => {
                 card.classList.toggle('show-desc');
             });
@@ -331,17 +797,14 @@ document.addEventListener('DOMContentLoaded', () => {
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                const validTypes = ['image/jpeg', 'image/png'];
-                const maxSize = 2 * 1024 * 1024; // 2MB
-                
-                if (!validTypes.includes(file.type)) {
+                if (!VALID_PHOTO_TYPES.includes(file.type)) {
                     photoUploadStatus.textContent = '❌ Solo se permiten JPG o PNG';
                     photoUploadStatus.style.color = '#d00';
                     fileInput.value = '';
                     return;
                 }
                 
-                if (file.size > maxSize) {
+                if (file.size > MAX_SINGLE_PHOTO_BYTES) {
                     photoUploadStatus.textContent = '❌ La foto debe ser menor a 2MB';
                     photoUploadStatus.style.color = '#d00';
                     fileInput.value = '';
@@ -382,14 +845,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const photoURL = await uploadPhotoToFirebase(file);
 
                 const newSingle = {
-                    name: document.getElementById('singleName').value,
+                    name: document.getElementById('singleName').value.trim(),
                     photo: photoURL,
-                    phrase: document.getElementById('singlePhrase').value,
-                    hobbies: document.getElementById('singleHobbies').value,
-                    description: document.getElementById('singleDesc').value
+                    phrase: document.getElementById('singlePhrase').value.trim(),
+                    hobbies: document.getElementById('singleHobbies').value.trim(),
+                    description: document.getElementById('singleDesc').value.trim()
                 };
 
-                const savedSingles = JSON.parse(localStorage.getItem('weddingSingles') || '[]');
+                const savedSingles = getSavedSingles();
                 savedSingles.push(newSingle);
                 localStorage.setItem('weddingSingles', JSON.stringify(savedSingles));
 

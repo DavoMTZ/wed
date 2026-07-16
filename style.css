@@ -534,6 +534,31 @@ body.content-visible .container {
     margin-bottom: 50px;
 }
 
+.gallery-section--soft {
+    border-left: none;
+    border-right: none;
+    padding: 28px 0 16px;
+}
+
+.gallery-page-header {
+    padding: 24px 20px;
+}
+
+.gallery-page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.gallery-page-intro {
+    max-width: 760px;
+    margin: 0 auto;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--dark-grey);
+}
+
 .gallery-header {
     text-align: center;
     margin-bottom: 30px;
@@ -603,17 +628,59 @@ body.content-visible .container {
     object-fit: cover;
 }
 
+.gallery-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-height: 54px;
+    padding: 10px 12px 11px;
+    background: rgba(253, 253, 253, 0.92);
+    border-top: 1px solid var(--light-grey);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    text-align: center;
+}
+
+.gallery-caption span {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.gallery-caption small {
+    font-size: 12px;
+    color: var(--dark-grey);
+    font-style: italic;
+}
+
 .gallery-item-placeholder {
     width: 100%;
     height: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
     padding: 20px;
+    gap: 8px;
     font-size: 13px;
     color: var(--dark-grey);
     font-style: italic;
+}
+
+.gallery-note {
+    margin-top: 18px;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--dark-grey);
 }
 
 /* =================== RSVP SYSTEM =================== */
@@ -694,6 +761,14 @@ body.content-visible .container {
     background: var(--dark-grey);
 }
 
+.rsvp-code-note {
+    margin-top: 10px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-style: italic;
+    color: var(--dark-grey);
+}
+
 .rsvp-counter {
     margin-top: 40px;
 }
@@ -711,6 +786,178 @@ body.content-visible .container {
     font-family: 'Playfair Display', serif;
     font-size: 42px;
     font-weight: 900;
+}
+
+/* =================== RSVP MODAL =================== */
+.rsvp-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 3000;
+}
+
+.rsvp-modal.active {
+    display: flex;
+}
+
+.rsvp-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+.rsvp-modal-dialog {
+    position: relative;
+    width: min(100%, 720px);
+    max-height: min(90vh, 900px);
+    overflow: auto;
+    background: var(--paper-bg);
+    border: 2px solid var(--border);
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.35);
+    padding: 34px;
+}
+
+.rsvp-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--accent);
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.rsvp-modal-header {
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+}
+
+.rsvp-modal-kicker {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--dark-grey);
+    margin-bottom: 10px;
+}
+
+.rsvp-modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 4vw, 42px);
+    line-height: 1.1;
+    margin-bottom: 10px;
+}
+
+.rsvp-modal-subtitle {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+}
+
+.rsvp-modal-body {
+    display: grid;
+    gap: 18px;
+}
+
+.rsvp-modal-block {
+    border: 1px solid var(--light-grey);
+    padding: 18px;
+    background: var(--paper-shade);
+}
+
+.rsvp-modal-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.rsvp-modal-text {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text);
+}
+
+.rsvp-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 24px;
+    flex-wrap: wrap;
+}
+
+.location-modal-dialog {
+    width: min(100%, 860px);
+}
+
+.location-modal-body {
+    gap: 22px;
+}
+
+.location-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.location-card,
+.hotel-item {
+    border: 1px solid var(--border);
+    background: var(--paper-shade);
+    padding: 18px;
+}
+
+.location-card h4,
+.hotel-item h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    line-height: 1.15;
+    margin-bottom: 10px;
+}
+
+.location-card p,
+.hotel-item p {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text);
+}
+
+.location-link {
+    display: inline-flex;
+    margin-top: 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--dark-grey);
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 2px;
+}
+
+.location-hotel-section {
+    border-top: 2px solid var(--border);
+    padding-top: 18px;
+}
+
+.location-hotel-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+body.modal-open {
+    overflow: hidden;
 }
 
 /* =================== FOOTER =================== */
@@ -1063,6 +1310,14 @@ body.content-visible .container {
         text-align: center;
     }
 
+    .rsvp-form .form-group {
+        margin-bottom: 14px;
+    }
+
+    .rsvp-form .form-group input {
+        width: 100%;
+    }
+
     .form-row {
         flex-direction: column;
         gap: 12px;
@@ -1082,9 +1337,36 @@ body.content-visible .container {
         display: none;
     }
 
+    .rsvp-modal-dialog {
+        padding: 22px 18px;
+    }
+
+    .rsvp-modal-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .rsvp-modal-actions .nav-btn,
+    .rsvp-modal-actions .rsvp-button {
+        width: 100%;
+    }
+
+    .location-grid,
+    .location-hotel-list {
+        grid-template-columns: 1fr;
+    }
+
     .gallery-grid,
     .singles-grid {
         grid-template-columns: 1fr;
+    }
+
+    .gallery-item img {
+        height: 100%;
+    }
+
+    .gallery-caption {
+        min-height: 48px;
     }
 
     .single-name {

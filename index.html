@@ -7,8 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lora:wght@400;500;600&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <!-- FIREBASE SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
 </head>
 <body>
     <!-- VIDEO INTRO -->
@@ -119,28 +120,48 @@
 
         <!-- =================== PÁGINA 2: GALERÍA =================== -->
         <div class="book-page" id="page-2">
-            <div class="newspaper-header" style="padding: 20px;">
-                <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; text-transform: uppercase;">La Galería del Amor</h2>
+            <div class="newspaper-header gallery-page-header">
+                <h2 class="gallery-page-title">La Galería del Amor</h2>
+                <p class="gallery-page-intro">Un archivo visual de momentos que cuentan la historia sin necesidad de subtítulos.</p>
             </div>
             
             <div class="article-quote">
                 "El verdadero viaje no es buscar nuevos lugares, sino ver con nuevos ojos"
             </div>
 
-            <div class="gallery-section" style="border: none; padding: 10px 0;">
+            <div class="gallery-section gallery-section--soft">
                 <div class="gallery-grid">
-                    <div class="gallery-item">
-                        <img src="foto1.jpg" alt="Recuerdo 1" onerror="this.parentElement.innerHTML='<div class=\"gallery-item-placeholder\">[ Fotografía Archivo 1 ]<br>Momentos especiales</div>'">
-                    </div>
-                    <div class="gallery-item">
-                        <img src="foto2.jpg" alt="Recuerdo 2" onerror="this.parentElement.innerHTML='<div class=\"gallery-item-placeholder\">[ Fotografía Archivo 2 ]<br>Nuestra historia</div>'">
-                    </div>
-                    <div class="gallery-item">
-                        <img src="foto3.jpg" alt="Recuerdo 3" onerror="this.parentElement.innerHTML='<div class=\"gallery-item-placeholder\">[ Fotografía Archivo 3 ]<br>El inicio del viaje</div>'">
-                    </div>
-                    <div class="gallery-item">
-                        <img src="foto4.jpg" alt="Recuerdo 4" onerror="this.parentElement.innerHTML='<div class=\"gallery-item-placeholder\">[ Fotografía Archivo 4 ]<br>Risas infinitas</div>'">
-                    </div>
+                    <figure class="gallery-item">
+                        <img src="foto1.jpg" alt="Recuerdo 1" loading="lazy" decoding="async" data-placeholder-title="Fotografía Archivo 1" data-placeholder-caption="Momentos especiales">
+                        <figcaption class="gallery-caption">
+                            <span>Archivo 1</span>
+                            <small>Momentos especiales</small>
+                        </figcaption>
+                    </figure>
+                    <figure class="gallery-item">
+                        <img src="foto2.jpg" alt="Recuerdo 2" loading="lazy" decoding="async" data-placeholder-title="Fotografía Archivo 2" data-placeholder-caption="Nuestra historia">
+                        <figcaption class="gallery-caption">
+                            <span>Archivo 2</span>
+                            <small>Nuestra historia</small>
+                        </figcaption>
+                    </figure>
+                    <figure class="gallery-item">
+                        <img src="foto3.jpg" alt="Recuerdo 3" loading="lazy" decoding="async" data-placeholder-title="Fotografía Archivo 3" data-placeholder-caption="El inicio del viaje">
+                        <figcaption class="gallery-caption">
+                            <span>Archivo 3</span>
+                            <small>El inicio del viaje</small>
+                        </figcaption>
+                    </figure>
+                    <figure class="gallery-item">
+                        <img src="foto4.jpg" alt="Recuerdo 4" loading="lazy" decoding="async" data-placeholder-title="Fotografía Archivo 4" data-placeholder-caption="Risas infinitas">
+                        <figcaption class="gallery-caption">
+                            <span>Archivo 4</span>
+                            <small>Risas infinitas</small>
+                        </figcaption>
+                    </figure>
+                </div>
+                <div class="gallery-note">
+                    Si alguna foto no carga, se mostrará un archivo de respaldo con el mismo estilo visual.
                 </div>
             </div>
 
@@ -154,21 +175,21 @@
             </div>
         </div>
 
-        <!-- =================== PÁGINA 3: SOLTEROS =================== -->
+        <!-- =================== PÁGINA 3: SECCIÓN SOCIAL =================== -->
         <div class="book-page" id="page-3">
             <div class="newspaper-header" style="padding: 20px;">
-                <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; text-transform: uppercase;">Rincón de Solteros</h2>
+                <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; text-transform: uppercase;">Los Lectores del Corazón</h2>
             </div>
 
             <div class="headline-section" style="border-bottom: none; margin-bottom: 10px;">
                 <div class="standfirst">
-                    ¡Atención corazones libres! Regístrate en nuestra exclusiva galería para que los demás solteros te conozcan antes del gran día.
+                    Crónica Social: Corazones en Edición Especial. Un espacio para presentar a los invitados que llegan con historia propia y ganas de conocer a nuevas almas antes del gran día.
                 </div>
             </div>
 
-            <!-- FORMULARIO SOLTEROS -->
+            <!-- FORMULARIO SECCIÓN SOCIAL -->
             <div class="rsvp-section" style="margin-bottom: 40px; padding: 25px;">
-                <h3 class="article-headline" style="font-size: 20px; text-align: center; border-bottom: none;">Únete a la Galería</h3>
+                <h3 class="article-headline" style="font-size: 20px; text-align: center; border-bottom: none;">Presenta tu perfil</h3>
                 <form id="singlesForm" class="singles-form">
                     <div class="form-row">
                         <div class="form-group">
@@ -176,34 +197,34 @@
                             <input type="text" id="singleName" required placeholder="Ej. Juan Pérez">
                         </div>
                         <div class="form-group">
-                            <label for="singlePhoto">Tu Foto (JPG, PNG - Máx. 2MB)</label>
+                            <label for="singlePhoto">Tu retrato (JPG, PNG - Máx. 2MB)</label>
                             <input type="file" id="singlePhoto" accept="image/jpeg,image/png" required>
                             <div id="photoUploadStatus" style="font-size: 12px; color: #666; margin-top: 5px;"></div>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="singlePhrase">Frase descriptiva</label>
+                            <label for="singlePhrase">Lema personal</label>
                             <input type="text" id="singlePhrase" required placeholder="Ej. Amante de los viajes">
                         </div>
                         <div class="form-group">
-                            <label for="singleHobbies">Hobbies</label>
+                            <label for="singleHobbies">Intereses</label>
                             <input type="text" id="singleHobbies" required placeholder="Ej. Leer, Cine">
                         </div>
                     </div>
                     <div class="form-group full-width">
-                        <label for="singleDesc">Breve Descripción (Se mostrará al hacer clic en tu foto)</label>
+                        <label for="singleDesc">Breve semblanza (Se mostrará al hacer clic en tu foto)</label>
                         <textarea id="singleDesc" rows="3" required placeholder="Cuéntanos un poco más sobre ti..."></textarea>
                     </div>
                     <div style="text-align: center; margin-top: 20px;">
-                        <button type="submit" class="rsvp-button">Registrarme</button>
+                        <button type="submit" class="rsvp-button">Aparecer en la edición</button>
                     </div>
                 </form>
             </div>
 
-            <!-- GALERÍA DE SOLTEROS -->
+            <!-- GALERÍA SOCIAL -->
             <div class="singles-gallery-container" style="margin-bottom: 40px;">
-                <h3 class="article-headline" style="text-align: center; border: none; margin-bottom: 30px;">Solteros Confirmados</h3>
+                <h3 class="article-headline" style="text-align: center; border: none; margin-bottom: 30px;">Perfiles publicados</h3>
                 <div class="singles-grid" id="singlesGrid">
                     <!-- Cards will be injected here via JS -->
                 </div>
@@ -230,10 +251,8 @@
                 Este sueño no sería posible sin el apoyo incondicional de nuestros padrinos. 
                 Gracias por guiarnos y acompañarnos en este importante paso.
                 <br><br>
-                <strong>Padrinos de Velación:</strong> [Nombre Padrinos]<br>
-                <strong>Padrinos de Anillos:</strong> [Nombre Padrinos]<br>
-                <strong>Padrinos de Lazo:</strong> [Nombre Padrinos]<br>
-                <strong>Padrinos de Arras:</strong> [Nombre Padrinos]
+                <strong>Código de vestimenta:</strong> Formal<br>
+                <strong>Padrinos de anillo:</strong> Lety Martínez Pérez y Daniel Herrera Martínez
             </div>
 
             <!-- RSVP SECTION -->
@@ -245,7 +264,12 @@
                         <label for="attendees">Número de asistentes:</label>
                         <input type="number" id="attendees" min="1" max="5" value="1" placeholder="1">
                     </div>
+                    <div class="form-group">
+                        <label for="invitationCode">Código de invitación:</label>
+                        <input type="text" id="invitationCode" maxlength="20" placeholder="QDX-2027" autocomplete="off" autocapitalize="characters" spellcheck="false">
+                    </div>
                     <button class="rsvp-button" id="rsvpButton">Confirmar</button>
+                    <p class="rsvp-code-note">Código base de invitación: <strong>QDX-2027</strong></p>
                 </div>
                 <div class="rsvp-counter">
                     <div class="counter-label">Confirmados hasta el momento</div>
@@ -265,6 +289,41 @@
 
     </div>
 
+    <!-- RSVP MODAL -->
+    <div class="rsvp-modal" id="rsvpModal" aria-hidden="true">
+        <div class="rsvp-modal-backdrop" data-close-modal></div>
+        <div class="rsvp-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="rsvpModalTitle">
+            <button class="rsvp-modal-close" type="button" data-close-modal aria-label="Cerrar modal">×</button>
+            <div class="rsvp-modal-header">
+                <div class="rsvp-modal-kicker">Confirmación de asistencia</div>
+                <h3 class="rsvp-modal-title" id="rsvpModalTitle">Tu asistencia está lista para confirmarse</h3>
+                <p class="rsvp-modal-subtitle" id="rsvpModalSubtitle"></p>
+            </div>
+
+            <div class="rsvp-modal-body">
+                <div class="rsvp-modal-block">
+                    <div class="rsvp-modal-label">Datos validados</div>
+                    <div class="rsvp-modal-text" id="rsvpModalValidation"></div>
+                </div>
+
+                <div class="rsvp-modal-block">
+                    <div class="rsvp-modal-label">Ceremonia</div>
+                    <div class="rsvp-modal-text" id="ceremonyInfo"></div>
+                </div>
+
+                <div class="rsvp-modal-block">
+                    <div class="rsvp-modal-label">Recepción</div>
+                    <div class="rsvp-modal-text" id="receptionInfo"></div>
+                </div>
+            </div>
+
+            <div class="rsvp-modal-actions">
+                <button class="rsvp-button" id="confirmAttendanceBtn" type="button">Confirmar asistencia</button>
+                <button class="nav-btn" id="cancelAttendanceBtn" type="button">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- AUDIO ELEMENT (SOUNDCLOUD) -->
     <iframe id="sc-widget" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A2176241616&color=%23747474&auto_play=false&hide_related=false&show_comments=false&show_user=false&show_reposts=false&visual=false" width="0" height="0" scrolling="no" frameborder="no" allow="autoplay; encrypted-media" style="display:none;"></iframe>
     <script src="https://w.soundcloud.com/player/api.js"></script>
@@ -277,6 +336,69 @@
             <span id="musicLabel">Pausar música</span>
         </div>
     </button>
+
+    <div class="rsvp-modal" id="locationModal" aria-hidden="true">
+        <div class="rsvp-modal-backdrop" data-close-location-modal></div>
+        <div class="rsvp-modal-dialog location-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="locationModalTitle">
+            <button class="rsvp-modal-close" type="button" data-close-location-modal aria-label="Cerrar modal">×</button>
+            <div class="rsvp-modal-header">
+                <div class="rsvp-modal-kicker">Ubicación y hospedaje</div>
+                <h3 class="rsvp-modal-title" id="locationModalTitle">Guía editorial para la ceremonia y la recepción</h3>
+                <p class="rsvp-modal-subtitle" id="locationModalSubtitle">La siguiente ficha aparece solo después de confirmar tu asistencia.</p>
+            </div>
+
+            <div class="rsvp-modal-body location-modal-body">
+                <div class="location-grid">
+                    <article class="location-card">
+                        <div class="rsvp-modal-label">Salón / Recepción</div>
+                        <h4>Quinta Duxeles</h4>
+                        <p>San Andrés Ocotlán. Punto principal de la recepción y la celebración.</p>
+                        <a class="location-link" href="https://maps.app.goo.gl/wxee1tDWwawNEnKG8" target="_blank" rel="noreferrer">Abrir en Maps</a>
+                    </article>
+
+                    <article class="location-card">
+                        <div class="rsvp-modal-label">Ceremonia</div>
+                        <h4>El Calvario de Metepec</h4>
+                        <p>Referencia ceremonial y punto de encuentro para el momento religioso.</p>
+                        <a class="location-link" href="https://maps.app.goo.gl/rfRRp9tBRnKjsiY67" target="_blank" rel="noreferrer">Abrir en Maps</a>
+                    </article>
+
+                    <article class="location-card">
+                        <div class="rsvp-modal-label">Entrada al Calvario</div>
+                        <h4>Acceso principal</h4>
+                        <p>Punto útil para llegar con anticipación y ubicar el acceso correcto.</p>
+                        <a class="location-link" href="https://maps.app.goo.gl/Hm9SdNJ8EbJvYGWV8" target="_blank" rel="noreferrer">Abrir en Maps</a>
+                    </article>
+                </div>
+
+                <div class="location-hotel-section">
+                    <div class="rsvp-modal-label">Hospedaje sugerido</div>
+                    <div class="location-hotel-list">
+                        <article class="hotel-item">
+                            <h4>Hotel Suites Inn La Muralla Metepec</h4>
+                            <p>Metepec. Opción amplia y silenciosa, útil para familias que priorizan descanso.</p>
+                        </article>
+                        <article class="hotel-item">
+                            <h4>Biohotel Boutique Metepec</h4>
+                            <p>Metepec. Perfil acogedor y familiar, con ambiente discreto para una estancia corta.</p>
+                        </article>
+                        <article class="hotel-item">
+                            <h4>Holiday Inn Express Galerías Metepec</h4>
+                            <p>Metepec. Alternativa de cadena con acceso práctico hacia el corredor del salón.</p>
+                        </article>
+                        <article class="hotel-item">
+                            <h4>Hotel Real del Nevado</h4>
+                            <p>Calimaya. Buena referencia para quienes vienen desde el sur y buscan acceso directo.</p>
+                        </article>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rsvp-modal-actions">
+                <button class="rsvp-button" type="button" data-close-location-modal>Volver a la invitación</button>
+            </div>
+        </div>
+    </div>
 
     <script src="firebase-config.js"></script>
     <script src="main.js"></script>
