@@ -484,11 +484,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         await rsvpRef.set(payload);
-        await firebaseDb.collection(RSVP_INVITATIONS_COLLECTION).doc(pendingRsvp.code).set({
-            confirmed: true,
-            confirmedAt: getServerTimestamp(),
-            confirmedAttendees: pendingRsvp.attendees
-        }, { merge: true });
     }
 
     if (rsvpModal) {
