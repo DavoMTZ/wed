@@ -148,28 +148,27 @@ if (useLocalRsvpDb) {
     console.warn('Para habilitar subida de fotos, sigue las instrucciones en FIREBASE_SETUP.md');
 }
 
-async function uploadPhotoToFirebase(file) {
-    if (!firebaseInitialized) {
-        throw new Error("Firebase no está configurado o la SDK no está cargada. Lee FIREBASE_SETUP.md.");
-    }
+async function uploadPhotoToImgBB(file) {
+    const apiKey = 'ec8b9ad07026ecab153691368ef48d3c';
+
+    const formData = new FormData();
+    formData.append('image', file);
 
     try {
-        const timestamp = Date.now();
-        const fileName = `singles/${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        const storageRef = firebase.storage().ref(fileName);
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
         
-        // Upload with progress
-        const uploadTask = storageRef.put(file);
-        
-        // Wait for completion
-        await uploadTask;
-        
-        // Get download URL
-        const downloadURL = await storageRef.getDownloadURL();
-        return downloadURL;
+        if (data.success) {
+            return data.data.url;
+        } else {
+            throw new Error(data.error.message || 'Error de la API de ImgBB');
+        }
     } catch (error) {
         console.error("Error uploading photo:", error);
-        throw new Error("Error al subir la foto. Verifica tu conexión y intenta de nuevo.");
+        throw new Error("Error al subir la foto a ImgBB. Verifica tu conexión.");
     }
 }
 
@@ -209,10 +208,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const iframeElement = document.getElementById('sc-widget');
     if (iframeElement && typeof SC !== 'undefined') {
         scPlayer = SC.Widget(iframeElement);
-        scPlayer.bind(SC.Widget.Events.READY, function() {
+        scPlayer.bind(SC.Widget.Events.READY, function () {
             scIsReady = true;
         });
-        scPlayer.bind(SC.Widget.Events.FINISH, function() {
+        scPlayer.bind(SC.Widget.Events.FINISH, function () {
             scPlayer.play(); // Loop
         });
     }
@@ -220,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const videoContainer = document.getElementById('videoContainer');
     const introVideo = document.getElementById('introVideo');
     const skipVideoBtn = document.getElementById('skipVideoBtn');
-    
+
     const introOverlay = document.getElementById('introOverlay');
     const newspaperIntro = document.getElementById('newspaperIntro');
     const newspaperLeft = document.getElementById('newspaperLeft');
@@ -236,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showNewspaperIntro() {
         if (videoCompleted) return;
         videoCompleted = true;
-        
+
         videoContainer.classList.add('hidden');
         introVideo.pause();
 
@@ -245,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Handle video end
-    if(introVideo) {
+    if (introVideo) {
         introVideo.addEventListener('ended', showNewspaperIntro);
         // Attempt to play automatically
         introVideo.play().catch(() => {
@@ -255,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Handle Skip Video
-    if(skipVideoBtn) {
+    if (skipVideoBtn) {
         skipVideoBtn.addEventListener('click', showNewspaperIntro);
     }
 
@@ -287,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, ANIMATION_NEWSPAPER_MS);
     }
 
-    if(newspaperIntro) {
+    if (newspaperIntro) {
         newspaperIntro.addEventListener('click', openNewspaper);
     }
 
@@ -297,15 +296,15 @@ document.addEventListener('DOMContentLoaded', () => {
         musicToggle.addEventListener('click', (e) => {
             e.stopPropagation();
             isPlaying = !isPlaying;
-            
+
             if (isPlaying) {
                 if (scPlayer && scIsReady) scPlayer.play();
                 musicToggle.classList.add('playing');
-                if(musicLabel) musicLabel.textContent = 'Pausar música';
+                if (musicLabel) musicLabel.textContent = 'Pausar música';
             } else {
                 if (scPlayer && scIsReady) scPlayer.pause();
                 musicToggle.classList.remove('playing');
-                if(musicLabel) musicLabel.textContent = 'Reproducir música';
+                if (musicLabel) musicLabel.textContent = 'Reproducir música';
             }
         });
     }
@@ -340,11 +339,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const galleryToggle = document.getElementById('galleryToggle');
     const galleryContent = document.getElementById('galleryContent');
 
-    if(galleryToggle && galleryContent) {
+    if (galleryToggle && galleryContent) {
         galleryToggle.addEventListener('click', () => {
             galleryContent.classList.toggle('expanded');
-            galleryToggle.textContent = galleryContent.classList.contains('expanded') 
-                ? 'Ocultar recuerdos' 
+            galleryToggle.textContent = galleryContent.classList.contains('expanded')
+                ? 'Ocultar recuerdos'
                 : 'Ver recuerdos';
         });
     }
@@ -465,10 +464,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return snapshot.exists ? { code: normalizedCode, ...snapshot.data() } : null;
     }
 
-async function saveRsvpConfirmation() {
-    if (!pendingRsvp || !firebaseDb) {
-        throw new Error('No hay una confirmación pendiente.');
-    }
+    async function saveRsvpConfirmation() {
+        if (!pendingRsvp || !firebaseDb) {
+            throw new Error('No hay una confirmación pendiente.');
+        }
 
         const rsvpRef = firebaseDb.collection(RSVP_RECORDS_COLLECTION).doc(pendingRsvp.code);
         const existing = await rsvpRef.get();
@@ -490,21 +489,6 @@ async function saveRsvpConfirmation() {
             confirmedAt: getServerTimestamp(),
             confirmedAttendees: pendingRsvp.attendees
         }, { merge: true });
-
-        // Enviar datos a n8n a través de un Webhook
-        try {
-            // Reemplaza esta URL con la "Production URL" de tu nodo Webhook en n8n
-            const webhookUrl = 'TU_URL_DE_N8N_AQUI'; 
-            if (webhookUrl !== 'TU_URL_DE_N8N_AQUI') {
-                fetch(webhookUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload) // Enviamos código, nombre, y asistentes
-                }).catch(err => console.log('Error silenciado al enviar a n8n', err));
-            }
-        } catch (error) {
-            console.log('Error de red con n8n');
-        }
     }
 
     if (rsvpModal) {
@@ -640,7 +624,7 @@ async function saveRsvpConfirmation() {
 
     // =================== PAGINATION LOGIC ===================
     const navButtons = document.querySelectorAll('.nav-btn');
-    
+
     navButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const targetPageId = 'page-' + btn.getAttribute('data-target');
@@ -658,7 +642,7 @@ async function saveRsvpConfirmation() {
             // Make target visible immediately but prepare for animation
             targetPage.style.visibility = 'visible';
             targetPage.style.opacity = '1';
-            
+
             // Bring target page to front during animation
             targetPage.style.zIndex = '11';
             currentPage.style.zIndex = '10';
@@ -678,11 +662,11 @@ async function saveRsvpConfirmation() {
             setTimeout(() => {
                 currentPage.classList.remove('active', 'flip-out-next', 'flip-out-prev');
                 currentPage.style.zIndex = '';
-                
+
                 targetPage.classList.remove('flip-in-next', 'flip-in-prev');
                 targetPage.style.zIndex = '';
                 targetPage.classList.add('active');
-                
+
                 // Cleanup inline styles that helped during animation
                 targetPage.style.visibility = '';
                 targetPage.style.opacity = '';
@@ -697,8 +681,8 @@ async function saveRsvpConfirmation() {
 
     function getSavedSingles() {
         try {
-        const saved = safeJsonParse(localStorage.getItem('weddingSingles') || '[]', []);
-        return Array.isArray(saved) ? saved : [];
+            const saved = safeJsonParse(localStorage.getItem('weddingSingles') || '[]', []);
+            return Array.isArray(saved) ? saved : [];
         } catch (error) {
             console.warn('No se pudieron leer los solteros guardados:', error);
             return [];
@@ -714,10 +698,10 @@ async function saveRsvpConfirmation() {
 
     function renderSingles() {
         if (!singlesGrid) return;
-        
+
         singlesGrid.innerHTML = '';
         const savedSingles = getSavedSingles();
-        
+
         if (savedSingles.length === 0) {
             const emptyState = document.createElement('p');
             emptyState.style.gridColumn = '1 / -1';
@@ -781,7 +765,7 @@ async function saveRsvpConfirmation() {
             info.appendChild(phrase);
             info.appendChild(hobbies);
             card.appendChild(info);
-            
+
             // Toggle description overlay on image click
             imgWrapper.addEventListener('click', () => {
                 card.classList.toggle('show-desc');
@@ -803,14 +787,14 @@ async function saveRsvpConfirmation() {
                     fileInput.value = '';
                     return;
                 }
-                
+
                 if (file.size > MAX_SINGLE_PHOTO_BYTES) {
                     photoUploadStatus.textContent = '❌ La foto debe ser menor a 2MB';
                     photoUploadStatus.style.color = '#d00';
                     fileInput.value = '';
                     return;
                 }
-                
+
                 photoUploadStatus.textContent = '✓ Foto seleccionada: ' + file.name;
                 photoUploadStatus.style.color = '#060';
             }
@@ -841,8 +825,8 @@ async function saveRsvpConfirmation() {
                 photoUploadStatus.textContent = 'Subiendo...';
                 photoUploadStatus.style.color = '#666';
 
-                // Upload photo to Firebase
-                const photoURL = await uploadPhotoToFirebase(file);
+                // Upload photo to ImgBB
+                const photoURL = await uploadPhotoToImgBB(file);
 
                 const newSingle = {
                     name: document.getElementById('singleName').value.trim(),
@@ -862,7 +846,7 @@ async function saveRsvpConfirmation() {
                 submitBtn.style.color = '#000';
                 photoUploadStatus.textContent = '✓ ¡Foto subida correctamente!';
                 photoUploadStatus.style.color = '#060';
-                
+
                 setTimeout(() => {
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
