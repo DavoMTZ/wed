@@ -696,11 +696,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return placeholder;
     }
 
-    function renderSingles() {
+    async function renderSingles() {
         if (!singlesGrid) return;
 
         singlesGrid.innerHTML = '';
-        const savedSingles = getSavedSingles();
+        let savedSingles = [];
+        
+        if (typeof firebaseDb !== 'undefined' && firebaseDb) {
+            try {
+                const snapshot = await firebaseDb.collection('singles').orderBy('timestamp', 'desc').get();
+                snapshot.forEach(doc => savedSingles.push(doc.data()));
+            } catch (error) {
+                console.warn('Error obteniendo solteros de Firebase:', error);
+                savedSingles = getSavedSingles();
+            }
+        } else {
+            savedSingles = getSavedSingles();
+        }
 
         if (savedSingles.length === 0) {
             const emptyState = document.createElement('p');
@@ -833,12 +845,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     photo: photoURL,
                     phrase: document.getElementById('singlePhrase').value.trim(),
                     hobbies: document.getElementById('singleHobbies').value.trim(),
-                    description: document.getElementById('singleDesc').value.trim()
+                    description: document.getElementById('singleDesc').value.trim(),
+                    timestamp: Date.now()
                 };
 
-                const savedSingles = getSavedSingles();
-                savedSingles.push(newSingle);
-                localStorage.setItem('weddingSingles', JSON.stringify(savedSingles));
+                if (typeof firebaseDb !== 'undefined' && firebaseDb) {
+                    await firebaseDb.collection('singles').add(newSingle);
+                } else {
+                    const savedSingles = getSavedSingles();
+                    savedSingles.unshift(newSingle);
+                    localStorage.setItem('weddingSingles', JSON.stringify(savedSingles));
+                }
 
                 // Feedback
                 submitBtn.textContent = '¡Registrado!';
